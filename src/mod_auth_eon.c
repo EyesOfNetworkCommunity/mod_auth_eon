@@ -54,6 +54,7 @@ q_result;
 // Structures to hold the mod_auth_eon's configuration directives Per-Directory Configuration
 typedef struct 
 {
+	unsigned char 	*remoteUser;			// by location or directory RemoteUser option
 	unsigned char 	*dbHost;			// host name of db server
 	unsigned int 	dbPort;				// port number of db server
 	unsigned char 	*dbSocket;  			// socket file of db server (takes precedence)
@@ -118,9 +119,25 @@ static unsigned char *	auth_eon_construct_full_uri	(request_rec *r);
 static unsigned char *	auth_eon_url_encode		(request_rec *r, const unsigned char *uri);
 static unsigned char *	auth_eon_url_decode		(request_rec *r, const unsigned char *uri_enc);
 
+// Default User Option
+const 		char * 	auth_eon_default_user		();
+
+typedef struct {
+	const	char *	defaultUser;			
+} auth_eon_config;
+
+static auth_eon_config global_config;
+
 // Module's configuration parameters
 static command_rec auth_eon_cmds[] = 
 {
+
+	AP_INIT_TAKE1("AuthEonDefaultUser", auth_eon_default_user, NULL, RSRC_CONF, "Default Remote User Option"),
+
+        AP_INIT_TAKE1 ("AuthEonRemoteUser", ap_set_string_slot,
+                (void *) APR_OFFSETOF(auth_eon_dir_config, remoteUser), OR_AUTHCFG,
+                "default remote user option"),
+
 	AP_INIT_TAKE1 ("AuthEonMySQLHost", ap_set_string_slot, 
 		(void *) APR_OFFSETOF(auth_eon_dir_config, dbHost), OR_AUTHCFG, 
 		"mysql server host name"),
@@ -307,6 +324,7 @@ static void * auth_eon_create_dir_config_cb (apr_pool_t *p, char *d)
   	if (!config) return NULL;
 
   	// default values
+	config->remoteUser	= NULL; 
   	config->dbHost 			= NULL; 	// connect to localhost
   	config->dbPort 			= 3306;
   	config->dbSocket 		= NULL; 
@@ -331,6 +349,20 @@ static void * auth_eon_create_dir_config_cb (apr_pool_t *p, char *d)
   	config->authoritative 		= 1;		// we should be the authoritative source
 
   	return (void *)config;
+}
+
+// Set Default Remote User
+const char *auth_eon_default_user(cmd_parms *cmd, void *cfg, const char *arg)
+{
+	if (arg) 
+	{
+		global_config.defaultUser=arg;	
+	}
+	else 
+	{
+		global_config.defaultUser=NULL;
+	}
+	return NULL;
 }
 
 // CALLBACK: this function does nothing more than return OK. 
@@ -360,6 +392,25 @@ static int auth_eon_check_user_id_cb (request_rec *r)
 	}
 
 	return OK;
+}
+
+// Extract string between two string
+char *extract(const char *const string, const char *const left, const char *const right)
+{
+	char  *head;
+	char  *tail;
+	size_t length;
+	char  *result;
+
+	length = strlen(left);
+	head   = strstr(string, left);
+	head += length;
+	tail  = strstr(head, right);
+	length = tail - head;
+	result = malloc(1 + length);
+	result[length] = '\0';
+	memcpy(result, head, length);
+	return result;
 }
 
 // CALLBACK: check the user's group membership and session
@@ -405,18 +456,27 @@ static int auth_eon_session_checker_cb (request_rec *r)
 	{
 		if (strncmp (r->user, "undef", 5) == 0) 
 		{
-			// user is undefined, try to get it from cookie if configured to do so
-			if (config->sessionCookies)
+			// Remote User option is defined
+			if (config->remoteUser)
 			{
-				const unsigned char *key_values = apr_table_get (r->headers_in, "Cookie");
-				char *uname = strstr (key_values, "user_name=");
-				char user[MAX_VAR_LEN]; user[0] = '\0';
-	
-				if (uname && strstr(uname,";"))
+				strcpy  (r->user, config->remoteUser);
+			}
+			// Default Remote User option is defined
+			else if (global_config.defaultUser)
+        		{
+                		strcpy	(r->user, global_config.defaultUser);
+        		}
+			// user is undefined, try to get it from cookie if configured to do so
+			else if (config->sessionCookies)
+			{
+				const char *string = apr_table_get (r->headers_in, "Cookie");
+				char *value;
+				value = extract(string, "user_name=", ";");
+				if (value)
 				{
-					strncpy (user, uname+10, strstr(uname,";")-(uname+10));
-					strcpy  (r->user, user);
+					strcpy  (r->user, value);
 				}
+				free(value);
 			}
 			// not configured to read from cookie, so overwrite "undef" user with given uid
 			else
