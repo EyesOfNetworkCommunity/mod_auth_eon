@@ -1,3 +1,15 @@
+2016-05-18  Jean-Philippe Levy <jeanphilippe.levy@gmail.com>
+
+	* mod_auth_eon 5.0-1
+	* src/mod_auth_eon.c
+	(auth_eon_session_checker_cb) r->user size fix
+	(auth_eon_session_checker_cb) new remoteUser dir option
+	(auth_eon_default_user) new defaultUser global option
+
+2016-05-04  Michael Aubertin <michael.aubertin@gmail.com>
+
+	* mod_auth_eon 5.0-0
+
 2016-04-07  Jeremie Bernard <gremimail@gmail.com>
 
 	* mod_auth_eon 4.2-3

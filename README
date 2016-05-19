@@ -1,4 +1,4 @@
-mod_auth_form
+mod_auth_eon
 Apache2 Form-Based Authorization Module
 ----------------------------------------
 
@@ -29,9 +29,9 @@ the user's group membership and act accordingly.
 
 Requirements
 ------------
-- Apache2 Web Server
+- Apache 2.4 Web Server
 -- With Runtime Library (apr0 or apr1)
-- MySQL 4.1 or greater
+- MySQL 5.5 or greater
 - Server-Side Scripting Processor
 -- Comes with MySQLi-Capable API
 
@@ -43,7 +43,7 @@ Please refer to INSTALL
 
 Configuration
 -------------
-Please refer to http://comp.uark.edu/~ajarthu/mod_auth_form
+Please refer to https://github.com/EyesOfNetworkCommunity/mod_auth_eon
 
 
 Files In This Directory (Not Counting the AutoConf/AutoMake Generated Files)
@@ -52,17 +52,17 @@ autom4/
 	Contains various automake/autoconf support files.
 
 src/
-	Contains mod_auth_form's source code.
+	Contains mod_auth_eon's source code.
 
 win32/
 	Contains Visual Studio files for building under a
 	Windows environment.
 
 AUTHORS
-	The authors who contributed to mod_auth_form.
+	The authors who contributed to mod_auth_eon.
 
 ChangeLog
-	Record of changes made to mod_auth_form. 
+	Record of changes made to mod_auth_eon. 
 
 configure.in
 	Input file for 'autoconf' to generate 'autom4te.cache
@@ -75,7 +75,7 @@ Makefile.am
 	Input file for 'automake' to generate 'Makefile.in'.
 
 NEWS
-	User visible changes made to mod_auth_form.
+	User visible changes made to mod_auth_eon.
 
 README
 	This file.
