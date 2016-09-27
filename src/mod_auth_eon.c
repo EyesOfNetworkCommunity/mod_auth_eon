@@ -395,12 +395,18 @@ static int auth_eon_check_user_id_cb (request_rec *r)
 }
 
 // Extract string between two string
-char *extract(const char *const string, const char *const left, const char *const right)
+char *extract(const char *const str1, const char *const left, const char *const right)
 {
 	char  *head;
 	char  *tail;
 	size_t length;
 	char  *result;
+
+	// FIX : user_name at the end of cookie chain
+	char *str2 = ";";
+	char *string = (char *) malloc(1 + strlen(str1)+ strlen(str2) );
+	strcpy(string, str1);
+	strcat(string, str2);
 
 	length = strlen(left);
 	head   = strstr(string, left);
